@@ -33,7 +33,7 @@ El proyecto incluye datos de prueba pre-cargados (2 clientes y 3 órdenes en dis
 
 ## Funcionalidades implementadas
 - Registro de órdenes con fotos (hasta 3 imágenes).
-- Flujo de estados validado por hooks del servidor: solicitada → en_diagnostico → presupuestada → aprobada → en_reparacion → lista → entregada.
+- Flujo de estados validado por hooks del servidor: solicitada -> en_diagnostico -> presupuestada -> aprobada -> en_reparacion -> lista -> entregada.
 - Registro automático de eventos en el historial (fecha incluida).
 - Cálculo del total del presupuesto (mano de obra + piezas) en el cliente con useMemo.
 - Reglas de seguridad: no se pueden borrar órdenes, no se pueden editar/borrar eventos, y no se pueden saltar etapas.
