@@ -4,15 +4,17 @@ import { Link } from 'react-router-dom'
 const PB_URL = 'http://127.0.0.1:8090'
 
 function ListaOrdenes() {
+  // Estados para las 贸rdenes, carga, error y t茅rmino de b煤squeda
   const [ordenes, setOrdenes] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+  const [busqueda, setBusqueda] = useState('')
 
+  // Funci贸n para cargar las 贸rdenes desde PocketBase con el cliente expandido
   const cargarOrdenes = async () => {
     setCargando(true)
     setError(null)
     try {
-      // Petición simplificada (sin el sort que causaba el error 400)
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records?expand=cliente`)
       if (!res.ok) {
         const errData = await res.json()
@@ -28,14 +30,26 @@ function ListaOrdenes() {
     }
   }
 
+  // useEffect para cargar las 贸rdenes al montar
   useEffect(() => {
     cargarOrdenes()
   }, [])
 
-  if (cargando) return <p>Cargando órdenes...</p>
+  // Filtrado por b煤squeda (equipo o cliente) y orden alfab茅tico por equipo
+  const ordenesFiltradas = ordenes
+    .filter(orden => {
+      const termino = busqueda.toLowerCase()
+      const equipo = (orden.equipo || '').toLowerCase()
+      const cliente = (orden.expand?.cliente?.nombre || '').toLowerCase()
+      return equipo.includes(termino) || cliente.includes(termino)
+    })
+    .sort((a, b) => (a.equipo || '').localeCompare(b.equipo || ''))
+
+  // Renderizado condicional para carga y error
+  if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando 贸rdenes...</p>
   if (error) return (
-    <div style={{ color: 'red', padding: '1rem', background: '#ffe6e6', borderRadius: '5px' }}>
-      <strong>Error al cargar las órdenes:</strong> {error}
+    <div style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>
+      <strong>Error al cargar las 贸rdenes:</strong> {error}
       <br />
       <button onClick={cargarOrdenes} style={{ marginTop: '10px' }}>Reintentar</button>
     </div>
@@ -43,19 +57,35 @@ function ListaOrdenes() {
 
   return (
     <div>
-      <h2>Lista de Órdenes</h2>
+      <h2 style={{ marginBottom: '1.5rem', color: '#1e293b' }}>Lista de 脫rdenes</h2>
       
-      {ordenes.length === 0 ? (
-        <p>No hay órdenes registradas.</p>
+      {/* Barra de b煤squeda con icono de lupa (car谩cter unicode) */}
+      <div className="search-bar">
+        <span>鈱�</span>
+        <input 
+          type="text" 
+          placeholder="Buscar por equipo o cliente..." 
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+      </div>
+
+      {/* Lista de 贸rdenes usando el grid de CSS */}
+      {ordenesFiltradas.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#64748b' }}>No se encontraron 贸rdenes.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {ordenes.map(orden => (
-            <li key={orden.id} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
-              <h3>{orden.equipo}</h3>
-              <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
-              <p><strong>Problema:</strong> {orden.problema}</p>
-              <p><strong>Estado:</strong> {orden.estado}</p>
-              <Link to={`/orden/${orden.id}`}>Ver detalle</Link>
+        <ul className="ordenes-grid">
+          {ordenesFiltradas.map(orden => (
+            <li key={orden.id} className="order-card">
+              <div>
+                <h3>{orden.equipo}</h3>
+                <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
+                <p><strong>Problema:</strong> {orden.problema}</p>
+                <p><strong>Estado:</strong> <span style={{ color: '#6366f1', fontWeight: 'bold' }}>{orden.estado}</span></p>
+              </div>
+              <div style={{ marginTop: '1rem' }}>
+                <Link to={`/orden/${orden.id}`}>Ver detalle 鈫�</Link>
+              </div>
             </li>
           ))}
         </ul>

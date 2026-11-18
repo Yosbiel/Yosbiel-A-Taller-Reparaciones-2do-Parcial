@@ -5,6 +5,8 @@ const PB_URL = 'http://127.0.0.1:8090'
 
 function NuevaOrden() {
   const navigate = useNavigate()
+  
+  // Estados para el formulario, la lista de clientes y las fotos
   const [clientes, setClientes] = useState([])
   const [form, setForm] = useState({
     cliente: '',
@@ -13,9 +15,11 @@ function NuevaOrden() {
   })
   const [fotos, setFotos] = useState([])
   const [error, setError] = useState(null)
+  
+  // useRef para acceder al input de archivos y poder hacer clic en él desde el botón personalizado
   const fileInputRef = useRef(null)
 
-  // Cargar clientes al montar
+  // useEffect para cargar los clientes al montar el componente
   useEffect(() => {
     async function cargarClientes() {
       try {
@@ -29,35 +33,37 @@ function NuevaOrden() {
     cargarClientes()
   }, [])
 
+  // Manejador de cambios en los campos de texto/select
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  // Manejador de cambios en el input de archivos (limita a 3 fotos)
   const handleFileChange = (e) => {
-    // Convertimos a array y limitamos a 3
     setFotos(Array.from(e.target.files).slice(0, 3))
   }
 
+  // Manejador del envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
 
     try {
-      // Usamos FormData para enviar archivos
+      // Usamos FormData para enviar los archivos junto con los datos
       const formData = new FormData()
       formData.append('cliente', form.cliente)
       formData.append('equipo', form.equipo)
       formData.append('problema', form.problema)
       formData.append('estado', 'solicitada')
 
-      // Añadir fotos si hay
+      // Añadimos cada foto al FormData
       fotos.forEach(foto => {
         formData.append('fotos', foto)
       })
 
+      // Enviamos la petición POST a PocketBase (sin Content-Type, el navegador lo pone)
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records`, {
         method: 'POST',
-        // NO ponemos Content-Type, fetch lo pone automáticamente con boundary
         body: formData
       })
 
@@ -66,7 +72,8 @@ function NuevaOrden() {
         throw new Error(errData.message || 'Error al crear la orden')
       }
 
-      navigate('/') // Volver a la lista
+      // Si todo va bien, navegamos a la lista
+      navigate('/')
     } catch (e) {
       setError(e.message)
     }
@@ -78,6 +85,7 @@ function NuevaOrden() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+        {/* Selector de cliente */}
         <div>
           <label>Cliente:</label>
           <select name="cliente" value={form.cliente} onChange={handleChange} required>
@@ -88,26 +96,34 @@ function NuevaOrden() {
           </select>
         </div>
 
+        {/* Campo de equipo */}
         <div>
           <label>Equipo:</label>
           <input name="equipo" value={form.equipo} onChange={handleChange} required />
         </div>
 
+        {/* Campo de problema */}
         <div>
           <label>Problema:</label>
           <textarea name="problema" value={form.problema} onChange={handleChange} required />
         </div>
 
+        {/* Input de fotos personalizado */}
         <div>
           <label>Fotos (máx. 3):</label>
-          <input 
-            type="file" 
-            multiple 
-            accept="image/*" 
-            onChange={handleFileChange} 
-            ref={fileInputRef}
-          />
-          {fotos.length > 0 && <p>{fotos.length} foto(s) seleccionada(s)</p>}
+          <div className="file-input-wrapper">
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*" 
+              onChange={handleFileChange} 
+              ref={fileInputRef}
+            />
+            <span className="file-input-label">Seleccionar fotos</span>
+            <span className="file-count">
+              {fotos.length > 0 ? `${fotos.length} seleccionada(s)` : 'Ninguna seleccionada'}
+            </span>
+          </div>
         </div>
 
         <button type="submit">Crear Orden</button>
