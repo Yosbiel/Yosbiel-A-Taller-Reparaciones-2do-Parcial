@@ -1,0 +1,19 @@
+# Dependencias de Node
+node_modules/
+cliente/node_modules/
+
+# Archivos de compilación de Vite
+cliente/dist/
+cliente/.vite/
+
+# Base de datos y ejecutable de PocketBase
+servidor/pb_data/
+servidor/pocketbase
+servidor/pocketbase.exe
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Variables de entorno
+.env
