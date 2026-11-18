@@ -4,7 +4,10 @@ import { useParams, Link } from 'react-router-dom'
 const PB_URL = 'http://127.0.0.1:8090'
 
 function DetalleOrden() {
+  // Obtenemos el ID de la orden desde la URL
   const { id } = useParams()
+  
+  // Estados principales
   const [orden, setOrden] = useState(null)
   const [eventos, setEventos] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -16,21 +19,24 @@ function DetalleOrden() {
   const [piezas, setPiezas] = useState([])
   const [nuevaPieza, setNuevaPieza] = useState({ descripcion: '', cantidad: 1, precio: 0 })
 
+  // Función para cargar la orden y sus eventos
   const cargarDatos = async () => {
     setCargando(true)
     try {
+      // Cargamos la orden con el cliente expandido
       const resOrden = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}?expand=cliente`)
       if (!resOrden.ok) throw new Error('Orden no encontrada')
       const dataOrden = await resOrden.json()
       setOrden(dataOrden)
 
+      // Si está en diagnóstico, precargamos el formulario
       if (dataOrden.estado === 'en_diagnostico') {
         setDiagnostico(dataOrden.diagnostico || '')
         setManoObra(dataOrden.manoObra || 0)
         setPiezas(dataOrden.piezas || [])
       }
 
-      // Consulta de eventos SIN el sort que causaba el error 400
+      // Cargamos los eventos del historial
       const resEventos = await fetch(`${PB_URL}/api/collections/eventos/records?filter=(orden='${id}')`)
       const dataEventos = await resEventos.json()
       setEventos(dataEventos.items || [])
@@ -41,15 +47,18 @@ function DetalleOrden() {
     }
   }
 
+  // useEffect para cargar los datos cuando el ID cambie o al montar
   useEffect(() => {
     cargarDatos()
   }, [id])
 
+  // Cálculo del total del presupuesto usando useMemo (se recalcula solo si cambian piezas o mano de obra)
   const totalPresupuesto = useMemo(() => {
     const totalPiezas = (piezas || []).reduce((acc, p) => acc + (p.cantidad * p.precio), 0)
     return Number(manoObra) + totalPiezas
   }, [manoObra, piezas])
 
+  // Función para cambiar el estado de la orden
   const cambiarEstado = async (nuevoEstado) => {
     try {
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}`, {
@@ -61,15 +70,14 @@ function DetalleOrden() {
         const err = await res.json()
         throw new Error(err.message || 'Error al cambiar de estado')
       }
-      // Esperar un momento para que el hook cree el evento, luego recargar
-      setTimeout(() => {
-        cargarDatos()
-      }, 500)
+      // Recargamos después de un pequeño retraso para que el hook cree el evento
+      setTimeout(() => cargarDatos(), 500)
     } catch (e) {
       alert(e.message)
     }
   }
 
+  // Función para guardar el presupuesto y pasar a estado "presupuestada"
   const guardarPresupuesto = async (e) => {
     e.preventDefault()
     try {
@@ -87,14 +95,13 @@ function DetalleOrden() {
         const err = await res.json()
         throw new Error(err.message || 'Error al guardar presupuesto')
       }
-      setTimeout(() => {
-        cargarDatos()
-      }, 500)
+      setTimeout(() => cargarDatos(), 500)
     } catch (e) {
       alert(e.message)
     }
   }
 
+  // Añadir una pieza al presupuesto
   const agregarPieza = () => {
     if (nuevaPieza.descripcion && nuevaPieza.cantidad > 0) {
       setPiezas([...piezas, nuevaPieza])
@@ -102,48 +109,58 @@ function DetalleOrden() {
     }
   }
 
+  // Quitar una pieza del presupuesto
   const quitarPieza = (index) => {
     setPiezas(piezas.filter((_, i) => i !== index))
   }
 
-  if (cargando) return <p>Cargando...</p>
+  // Renderizado condicional
+  if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando...</p>
   if (error) return <p style={{ color: 'red' }}>{error}</p>
   if (!orden) return <p>Orden no encontrada.</p>
 
   return (
     <div>
-      <Link to="/">← Volver a la lista</Link>
-      <h2>Detalle de la Orden</h2>
+      <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>Volver a la lista</Link>
+      <h2 style={{ marginBottom: '1.5rem', color: '#1e293b' }}>Detalle de la Orden</h2>
 
-      <div style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+      {/* Contenedor con los datos de la orden */}
+      <div className="detail-container">
         <p><strong>Equipo:</strong> {orden.equipo}</p>
         <p><strong>Problema:</strong> {orden.problema}</p>
-        <p><strong>Estado:</strong> <span style={{ fontWeight: 'bold', color: 'blue' }}>{orden.estado}</span></p>
+        <p><strong>Estado:</strong> <span style={{ color: '#6366f1', fontWeight: 'bold', textTransform: 'uppercase' }}>{orden.estado}</span></p>
         <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
         
+        {/* Mostrar fotos si existen */}
         {orden.fotos && orden.fotos.length > 0 && (
-          <div>
+          <div style={{ marginTop: '1rem' }}>
             <strong>Fotos:</strong>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem', flexWrap: 'wrap' }}>
               {orden.fotos.map((foto, i) => (
-                <img key={i} src={`${PB_URL}/api/files/ordenes/${orden.id}/${foto}`} alt="foto" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                <img 
+                  key={i} 
+                  src={`${PB_URL}/api/files/ordenes/${orden.id}/${foto}`} 
+                  alt="foto" 
+                  style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} 
+                />
               ))}
             </div>
           </div>
         )}
       </div>
 
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '10px' }}>
+      {/* Botones de acción según el estado actual */}
+      <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {orden.estado === 'solicitada' && (
           <>
             <button onClick={() => cambiarEstado('en_diagnostico')}>Iniciar Diagnóstico</button>
-            <button onClick={() => cambiarEstado('cancelada')} style={{ background: '#ccc' }}>Cancelar Orden</button>
+            <button className="secondary" onClick={() => cambiarEstado('cancelada')}>Cancelar Orden</button>
           </>
         )}
         {orden.estado === 'presupuestada' && (
           <>
             <button onClick={() => cambiarEstado('aprobada')}>Aprobar Presupuesto</button>
-            <button onClick={() => cambiarEstado('rechazada')} style={{ background: '#ccc' }}>Rechazar Presupuesto</button>
+            <button className="secondary" onClick={() => cambiarEstado('rechazada')}>Rechazar Presupuesto</button>
           </>
         )}
         {orden.estado === 'aprobada' && (
@@ -157,64 +174,102 @@ function DetalleOrden() {
         )}
       </div>
 
+      {/* Formulario de presupuesto (solo si está en diagnóstico) */}
       {orden.estado === 'en_diagnostico' && (
-        <div style={{ border: '1px solid #007bff', padding: '1rem', marginBottom: '1rem' }}>
-          <h3>Registrar Presupuesto</h3>
+        <div className="detail-container" style={{ borderTop: '4px solid #6366f1' }}>
+          <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Registrar Presupuesto</h3>
           <form onSubmit={guardarPresupuesto}>
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <label>Diagnóstico:</label>
-              <textarea value={diagnostico} onChange={e => setDiagnostico(e.target.value)} required style={{ width: '100%' }} />
+              <textarea 
+                value={diagnostico} 
+                onChange={e => setDiagnostico(e.target.value)} 
+                required 
+                rows="3" 
+              />
             </div>
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <label>Mano de obra ($):</label>
-              <input type="number" value={manoObra} onChange={e => setManoObra(e.target.value)} required />
+              <input 
+                type="number" 
+                value={manoObra} 
+                onChange={e => setManoObra(e.target.value)} 
+                required 
+              />
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <h4>Piezas</h4>
-              <ul>
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Piezas</label>
+              <ul style={{ listStyle: 'none', padding: 0, marginBottom: '0.5rem' }}>
                 {piezas.map((p, i) => (
-                  <li key={i}>
-                    {p.descripcion} (x{p.cantidad}) - ${p.precio} c/u
-                    <button type="button" onClick={() => quitarPieza(i)} style={{ marginLeft: '10px', background: 'red', color: 'white', padding: '2px 5px' }}>X</button>
+                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span>{p.descripcion} (x{p.cantidad}) - ${p.precio} c/u</span>
+                    <button type="button" className="danger" onClick={() => quitarPieza(i)}>X</button>
                   </li>
                 ))}
               </ul>
-              <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                <input placeholder="Descripción" value={nuevaPieza.descripcion} onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} />
-                <input type="number" placeholder="Cant" value={nuevaPieza.cantidad} onChange={e => setNuevaPieza({...nuevaPieza, cantidad: Number(e.target.value)})} style={{ width: '60px' }} />
-                <input type="number" placeholder="Precio" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} style={{ width: '80px' }} />
-                <button type="button" onClick={agregarPieza}>Añadir</button>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <input 
+                  placeholder="Descripción" 
+                  value={nuevaPieza.descripcion} 
+                  onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} 
+                  style={{ flex: 2 }} 
+                />
+                <input 
+                  type="number" 
+                  placeholder="Cant" 
+                  value={nuevaPieza.cantidad} 
+                  onChange={e => setNuevaPieza({...nuevaPieza, cantidad: Number(e.target.value)})} 
+                  style={{ flex: 1 }} 
+                />
+                <input 
+                  type="number" 
+                  placeholder="Precio" 
+                  value={nuevaPieza.precio} 
+                  onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} 
+                  style={{ flex: 1 }} 
+                />
+                <button type="button" onClick={agregarPieza} style={{ flex: 0 }}>Añadir</button>
               </div>
             </div>
             
-            <h4>Total Presupuesto: ${totalPresupuesto.toFixed(2)}</h4>
-            <button type="submit" style={{ marginTop: '10px' }}>Guardar y Presupuestar</button>
+            <div className="budget-box">
+              <h4 style={{ color: '#1e293b' }}>Total Presupuesto: ${totalPresupuesto.toFixed(2)}</h4>
+            </div>
+            <button type="submit" style={{ marginTop: '1rem', width: '100%' }}>Guardar y Presupuestar</button>
           </form>
         </div>
       )}
 
+      {/* Mostrar presupuesto registrado (si ya no está en diagnóstico) */}
       {(orden.diagnostico || orden.manoObra || (orden.piezas && orden.piezas.length > 0)) && orden.estado !== 'en_diagnostico' && (
-         <div style={{ marginBottom: '1rem', background: '#eef', padding: '1rem' }}>
-            <h3>Presupuesto Registrado</h3>
+         <div className="detail-container budget-box">
+            <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Presupuesto Registrado</h3>
             <p><strong>Diagnóstico:</strong> {orden.diagnostico}</p>
             <p><strong>Mano de obra:</strong> ${orden.manoObra || 0}</p>
             {orden.piezas && orden.piezas.length > 0 && (
-              <ul>
+              <ul style={{ listStyle: 'circle', paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
                 {orden.piezas.map((p, i) => <li key={i}>{p.descripcion} (x{p.cantidad}) - ${p.precio}</li>)}
               </ul>
             )}
-            <p><strong>Total:</strong> ${totalPresupuesto.toFixed(2)}</p>
+            <p style={{ marginTop: '1rem', fontSize: '1.2rem' }}><strong>Total:</strong> ${totalPresupuesto.toFixed(2)}</p>
          </div>
       )}
 
-      <h3>Historial de Eventos</h3>
-      <ul>
+      {/* Historial de eventos */}
+      <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Historial de Eventos</h3>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
         {eventos.length === 0 ? (
-          <li>No hay eventos registrados.</li>
+          <li style={{ color: '#64748b' }}>No hay eventos registrados.</li>
         ) : (
           eventos.map(ev => (
-            <li key={ev.id}>
-              {ev.de} → {ev.a} ({new Date(ev.created).toLocaleString()})
+            <li 
+              key={ev.id} 
+              style={{ background: '#fff', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+            >
+              <strong>{ev.de}</strong> → <strong>{ev.a}</strong> 
+              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                ({ev.created ? new Date(ev.created).toLocaleString() : 'Fecha no disponible'})
+              </span>
             </li>
           ))
         )}
