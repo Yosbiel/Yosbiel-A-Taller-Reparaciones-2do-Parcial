@@ -110,7 +110,7 @@ function NuevaOrden() {
 
         {/* Input de fotos personalizado */}
         <div>
-          <label>Fotos (máx. 3):</label>
+          <label>Fotos (max. 3):</label>
           <div className="file-input-wrapper">
             <input 
               type="file" 

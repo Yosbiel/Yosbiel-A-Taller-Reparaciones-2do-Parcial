@@ -153,7 +153,7 @@ function DetalleOrden() {
       <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {orden.estado === 'solicitada' && (
           <>
-            <button onClick={() => cambiarEstado('en_diagnostico')}>Iniciar Diagnóstico</button>
+            <button onClick={() => cambiarEstado('en_diagnostico')}>Iniciar Diagnostico</button>
             <button className="secondary" onClick={() => cambiarEstado('cancelada')}>Cancelar Orden</button>
           </>
         )}
@@ -164,7 +164,7 @@ function DetalleOrden() {
           </>
         )}
         {orden.estado === 'aprobada' && (
-          <button onClick={() => cambiarEstado('en_reparacion')}>Iniciar Reparación</button>
+          <button onClick={() => cambiarEstado('en_reparacion')}>Iniciar Reparacion</button>
         )}
         {orden.estado === 'en_reparacion' && (
           <button onClick={() => cambiarEstado('lista')}>Marcar como Lista</button>
@@ -180,7 +180,7 @@ function DetalleOrden() {
           <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Registrar Presupuesto</h3>
           <form onSubmit={guardarPresupuesto}>
             <div style={{ marginBottom: '1rem' }}>
-              <label>Diagnóstico:</label>
+              <label>Diagnostico:</label>
               <textarea 
                 value={diagnostico} 
                 onChange={e => setDiagnostico(e.target.value)} 
@@ -244,7 +244,7 @@ function DetalleOrden() {
       {(orden.diagnostico || orden.manoObra || (orden.piezas && orden.piezas.length > 0)) && orden.estado !== 'en_diagnostico' && (
          <div className="detail-container budget-box">
             <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Presupuesto Registrado</h3>
-            <p><strong>Diagnóstico:</strong> {orden.diagnostico}</p>
+            <p><strong>Diagnostico:</strong> {orden.diagnostico}</p>
             <p><strong>Mano de obra:</strong> ${orden.manoObra || 0}</p>
             {orden.piezas && orden.piezas.length > 0 && (
               <ul style={{ listStyle: 'circle', paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
@@ -266,7 +266,7 @@ function DetalleOrden() {
               key={ev.id} 
               style={{ background: '#fff', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
             >
-              <strong>{ev.de}</strong> → <strong>{ev.a}</strong> 
+              <strong>{ev.de}</strong> -> <strong>{ev.a}</strong> 
               <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
                 ({ev.created ? new Date(ev.created).toLocaleString() : 'Fecha no disponible'})
               </span>

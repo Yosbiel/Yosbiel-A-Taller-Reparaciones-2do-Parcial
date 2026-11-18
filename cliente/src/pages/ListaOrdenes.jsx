@@ -46,10 +46,10 @@ function ListaOrdenes() {
     .sort((a, b) => (a.equipo || '').localeCompare(b.equipo || ''))
 
   // Renderizado condicional para carga y error
-  if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando órdenes...</p>
+  if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando ordenes...</p>
   if (error) return (
     <div style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>
-      <strong>Error al cargar las órdenes:</strong> {error}
+      <strong>Error al cargar las ordenes:</strong> {error}
       <br />
       <button onClick={cargarOrdenes} style={{ marginTop: '10px' }}>Reintentar</button>
     </div>
@@ -57,11 +57,12 @@ function ListaOrdenes() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: '1.5rem', color: '#1e293b' }}>Lista de Órdenes</h2>
+      {/* Título sin tilde para evitar problemas de codificación */}
+      <h2 style={{ marginBottom: '1.5rem', color: '#1e293b' }}>Lista de Ordenes</h2>
       
-      {/* Barra de búsqueda con icono de lupa (carácter unicode) */}
+      {/* Barra de búsqueda con texto simple en lugar de símbolo unicode */}
       <div className="search-bar">
-        <span>⌕</span>
+        <span>Buscar:</span>
         <input 
           type="text" 
           placeholder="Buscar por equipo o cliente..." 
@@ -72,7 +73,7 @@ function ListaOrdenes() {
 
       {/* Lista de órdenes usando el grid de CSS */}
       {ordenesFiltradas.length === 0 ? (
-        <p style={{ textAlign: 'center', color: '#64748b' }}>No se encontraron órdenes.</p>
+        <p style={{ textAlign: 'center', color: '#64748b' }}>No se encontraron ordenes.</p>
       ) : (
         <ul className="ordenes-grid">
           {ordenesFiltradas.map(orden => (
@@ -84,7 +85,8 @@ function ListaOrdenes() {
                 <p><strong>Estado:</strong> <span style={{ color: '#6366f1', fontWeight: 'bold' }}>{orden.estado}</span></p>
               </div>
               <div style={{ marginTop: '1rem' }}>
-                <Link to={`/orden/${orden.id}`}>Ver detalle →</Link>
+                {/* Enlace sin flecha, solo texto */}
+                <Link to={`/orden/${orden.id}`}>Ver detalle</Link>
               </div>
             </li>
           ))}
