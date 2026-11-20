@@ -275,3 +275,89 @@ label {
     color: #64748b;
     margin-left: 0.5rem;
 }
+
+/* TEMA OSCURO */
+body.dark {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+body.dark header {
+  background: #1e293b;
+}
+
+body.dark .order-card,
+body.dark .detail-container,
+body.dark .search-bar {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+body.dark .order-card h3,
+body.dark .detail-container p,
+body.dark h2,
+body.dark h3 {
+  color: #f1f5f9;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+body.dark .search-bar input {
+  background: transparent;
+  color: #e2e8f0;
+}
+
+body.dark .budget-box {
+  background: #1e293b;
+  border-left-color: #6366f1;
+}
+
+/* PILDORAS DE ESTADO */
+.pill {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pill-gray { background: #e2e8f0; color: #475569; }
+.pill-blue { background: #dbeafe; color: #1e40af; }
+.pill-purple { background: #ede9fe; color: #5b21b6; }
+.pill-green { background: #d1fae5; color: #065f46; }
+.pill-red { background: #fee2e2; color: #991b1b; }
+.pill-orange { background: #ffedd5; color: #9a3412; }
+.pill-teal { background: #ccfbf1; color: #115e59; }
+.pill-dark { background: #1e293b; color: #f8fafc; }
+
+body.dark .pill-gray { background: #334155; color: #cbd5e1; }
+body.dark .pill-blue { background: #1e3a8a; color: #dbeafe; }
+body.dark .pill-purple { background: #4c1d95; color: #ede9fe; }
+body.dark .pill-green { background: #064e3b; color: #d1fae5; }
+body.dark .pill-red { background: #7f1d1d; color: #fee2e2; }
+body.dark .pill-orange { background: #7c2d12; color: #ffedd5; }
+body.dark .pill-teal { background: #134e4a; color: #ccfbf1; }
+body.dark .pill-dark { background: #0f172a; color: #f8fafc; }
+
+/* Boton de tema */
+.theme-toggle {
+  background: transparent;
+  font-size: 1rem;
+  padding: 0.4rem 0.8rem;
+  box-shadow: none;
+  border: 1px solid #475569;
+  margin-left: 1rem;
+}
+.theme-toggle:hover {
+  background: #334155;
+  transform: none;
+}

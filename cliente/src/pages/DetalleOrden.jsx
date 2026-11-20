@@ -1,42 +1,38 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { estadoLabel, estadoColor } from '../utils/estados'
 
 const PB_URL = 'http://127.0.0.1:8090'
 
 function DetalleOrden() {
-  // Obtenemos el ID de la orden desde la URL
   const { id } = useParams()
-  
-  // Estados principales
   const [orden, setOrden] = useState(null)
   const [eventos, setEventos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
-  // Estados para el formulario de presupuesto
   const [diagnostico, setDiagnostico] = useState('')
   const [manoObra, setManoObra] = useState(0)
   const [piezas, setPiezas] = useState([])
   const [nuevaPieza, setNuevaPieza] = useState({ descripcion: '', cantidad: 1, precio: 0 })
+  
+  // Estado para errores del formulario personalizado
+  const [formError, setFormError] = useState('')
 
-  // Función para cargar la orden y sus eventos
   const cargarDatos = async () => {
     setCargando(true)
     try {
-      // Cargamos la orden con el cliente expandido
       const resOrden = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}?expand=cliente`)
       if (!resOrden.ok) throw new Error('Orden no encontrada')
       const dataOrden = await resOrden.json()
       setOrden(dataOrden)
 
-      // Si está en diagnóstico, precargamos el formulario
       if (dataOrden.estado === 'en_diagnostico') {
         setDiagnostico(dataOrden.diagnostico || '')
         setManoObra(dataOrden.manoObra || 0)
         setPiezas(dataOrden.piezas || [])
       }
 
-      // Cargamos los eventos del historial
       const resEventos = await fetch(`${PB_URL}/api/collections/eventos/records?filter=(orden='${id}')`)
       const dataEventos = await resEventos.json()
       setEventos(dataEventos.items || [])
@@ -47,18 +43,15 @@ function DetalleOrden() {
     }
   }
 
-  // useEffect para cargar los datos cuando el ID cambie o al montar
   useEffect(() => {
     cargarDatos()
   }, [id])
 
-  // Cálculo del total del presupuesto usando useMemo (se recalcula solo si cambian piezas o mano de obra)
   const totalPresupuesto = useMemo(() => {
     const totalPiezas = (piezas || []).reduce((acc, p) => acc + (p.cantidad * p.precio), 0)
     return Number(manoObra) + totalPiezas
   }, [manoObra, piezas])
 
-  // Función para cambiar el estado de la orden
   const cambiarEstado = async (nuevoEstado) => {
     try {
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}`, {
@@ -70,16 +63,26 @@ function DetalleOrden() {
         const err = await res.json()
         throw new Error(err.message || 'Error al cambiar de estado')
       }
-      // Recargamos después de un pequeño retraso para que el hook cree el evento
       setTimeout(() => cargarDatos(), 500)
     } catch (e) {
       alert(e.message)
     }
   }
 
-  // Función para guardar el presupuesto y pasar a estado "presupuestada"
   const guardarPresupuesto = async (e) => {
     e.preventDefault()
+    setFormError('') // Limpiar errores previos
+
+    // Validacion manual
+    if (!diagnostico.trim()) {
+      setFormError('El diagnostico es obligatorio.')
+      return
+    }
+    if (Number(manoObra) < 0) {
+      setFormError('La mano de obra no puede ser negativa.')
+      return
+    }
+
     try {
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}`, {
         method: 'PATCH',
@@ -97,11 +100,10 @@ function DetalleOrden() {
       }
       setTimeout(() => cargarDatos(), 500)
     } catch (e) {
-      alert(e.message)
+      setFormError(e.message)
     }
   }
 
-  // Añadir una pieza al presupuesto
   const agregarPieza = () => {
     if (nuevaPieza.descripcion && nuevaPieza.cantidad > 0) {
       setPiezas([...piezas, nuevaPieza])
@@ -109,12 +111,10 @@ function DetalleOrden() {
     }
   }
 
-  // Quitar una pieza del presupuesto
   const quitarPieza = (index) => {
     setPiezas(piezas.filter((_, i) => i !== index))
   }
 
-  // Renderizado condicional
   if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando...</p>
   if (error) return <p style={{ color: 'red' }}>{error}</p>
   if (!orden) return <p>Orden no encontrada.</p>
@@ -122,16 +122,19 @@ function DetalleOrden() {
   return (
     <div>
       <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>Volver a la lista</Link>
-      <h2 style={{ marginBottom: '1.5rem', color: '#1e293b' }}>Detalle de la Orden</h2>
+      <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-color)' }}>Detalle de la Orden</h2>
 
-      {/* Contenedor con los datos de la orden */}
       <div className="detail-container">
         <p><strong>Equipo:</strong> {orden.equipo}</p>
         <p><strong>Problema:</strong> {orden.problema}</p>
-        <p><strong>Estado:</strong> <span style={{ color: '#6366f1', fontWeight: 'bold', textTransform: 'uppercase' }}>{orden.estado}</span></p>
+        <p>
+          <strong>Estado:</strong>{' '}
+          <span className={`pill ${estadoColor(orden.estado)}`}>
+            {estadoLabel(orden.estado)}
+          </span>
+        </p>
         <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
         
-        {/* Mostrar fotos si existen */}
         {orden.fotos && orden.fotos.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
             <strong>Fotos:</strong>
@@ -149,7 +152,6 @@ function DetalleOrden() {
         )}
       </div>
 
-      {/* Botones de acción según el estado actual */}
       <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {orden.estado === 'solicitada' && (
           <>
@@ -174,17 +176,18 @@ function DetalleOrden() {
         )}
       </div>
 
-      {/* Formulario de presupuesto (solo si está en diagnóstico) */}
       {orden.estado === 'en_diagnostico' && (
         <div className="detail-container" style={{ borderTop: '4px solid #6366f1' }}>
-          <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Registrar Presupuesto</h3>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Registrar Presupuesto</h3>
+          {/* Mensaje de error personalizado */}
+          {formError && <div style={{ color: 'red', marginBottom: '1rem', background: '#fee2e2', padding: '0.5rem', borderRadius: '4px' }}>{formError}</div>}
+          
           <form onSubmit={guardarPresupuesto}>
             <div style={{ marginBottom: '1rem' }}>
               <label>Diagnostico:</label>
               <textarea 
                 value={diagnostico} 
                 onChange={e => setDiagnostico(e.target.value)} 
-                required 
                 rows="3" 
               />
             </div>
@@ -194,7 +197,6 @@ function DetalleOrden() {
                 type="number" 
                 value={manoObra} 
                 onChange={e => setManoObra(e.target.value)} 
-                required 
               />
             </div>
             <div style={{ marginBottom: '1rem' }}>
@@ -209,7 +211,7 @@ function DetalleOrden() {
               </ul>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <input 
-                  placeholder="Descripción" 
+                  placeholder="Descripcion" 
                   value={nuevaPieza.descripcion} 
                   onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} 
                   style={{ flex: 2 }} 
@@ -228,22 +230,21 @@ function DetalleOrden() {
                   onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} 
                   style={{ flex: 1 }} 
                 />
-                <button type="button" onClick={agregarPieza} style={{ flex: 0 }}>Añadir</button>
+                <button type="button" onClick={agregarPieza} style={{ flex: 0 }}>Anadir</button>
               </div>
             </div>
             
             <div className="budget-box">
-              <h4 style={{ color: '#1e293b' }}>Total Presupuesto: ${totalPresupuesto.toFixed(2)}</h4>
+              <h4 style={{ color: 'var(--text-color)' }}>Total Presupuesto: ${totalPresupuesto.toFixed(2)}</h4>
             </div>
             <button type="submit" style={{ marginTop: '1rem', width: '100%' }}>Guardar y Presupuestar</button>
           </form>
         </div>
       )}
 
-      {/* Mostrar presupuesto registrado (si ya no está en diagnóstico) */}
       {(orden.diagnostico || orden.manoObra || (orden.piezas && orden.piezas.length > 0)) && orden.estado !== 'en_diagnostico' && (
          <div className="detail-container budget-box">
-            <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Presupuesto Registrado</h3>
+            <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Presupuesto Registrado</h3>
             <p><strong>Diagnostico:</strong> {orden.diagnostico}</p>
             <p><strong>Mano de obra:</strong> ${orden.manoObra || 0}</p>
             {orden.piezas && orden.piezas.length > 0 && (
@@ -255,8 +256,7 @@ function DetalleOrden() {
          </div>
       )}
 
-      {/* Historial de eventos */}
-      <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Historial de Eventos</h3>
+      <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Historial de Eventos</h3>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {eventos.length === 0 ? (
           <li style={{ color: '#64748b' }}>No hay eventos registrados.</li>
@@ -264,9 +264,9 @@ function DetalleOrden() {
           eventos.map(ev => (
             <li 
               key={ev.id} 
-              style={{ background: '#fff', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+              style={{ background: 'var(--card-bg)', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', color: 'var(--text-color)' }}
             >
-              <strong>{ev.de}</strong> -> <strong>{ev.a}</strong> 
+              <strong>{ev.de}</strong> - <strong>{ev.a}</strong> 
               <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
                 ({ev.created ? new Date(ev.created).toLocaleString() : 'Fecha no disponible'})
               </span>

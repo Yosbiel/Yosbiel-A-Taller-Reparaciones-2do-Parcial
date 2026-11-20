@@ -4,6 +4,7 @@ import ListaOrdenes from './pages/ListaOrdenes.jsx'
 import DetalleOrden from './pages/DetalleOrden.jsx'
 import NuevaOrden from './pages/NuevaOrden.jsx'
 import NoEncontrada from './pages/NoEncontrada.jsx'
+import AcercaDe from './pages/AcercaDe.jsx'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route index element={<ListaOrdenes />} />
         <Route path="orden/nueva" element={<NuevaOrden />} />
         <Route path="orden/:id" element={<DetalleOrden />} />
+        <Route path="acerca" element={<AcercaDe />} />
         <Route path="*" element={<NoEncontrada />} />
       </Route>
     </Routes>

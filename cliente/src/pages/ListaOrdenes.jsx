@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { estadoLabel, estadoColor } from '../utils/estados'
 
 const PB_URL = 'http://127.0.0.1:8090'
 
 function ListaOrdenes() {
-  // Estados para las órdenes, carga, error y término de búsqueda
   const [ordenes, setOrdenes] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
 
-  // Función para cargar las órdenes desde PocketBase con el cliente expandido
   const cargarOrdenes = async () => {
     setCargando(true)
     setError(null)
@@ -30,12 +29,10 @@ function ListaOrdenes() {
     }
   }
 
-  // useEffect para cargar las órdenes al montar
   useEffect(() => {
     cargarOrdenes()
   }, [])
 
-  // Filtrado por búsqueda (equipo o cliente) y orden alfabético por equipo
   const ordenesFiltradas = ordenes
     .filter(orden => {
       const termino = busqueda.toLowerCase()
@@ -45,7 +42,6 @@ function ListaOrdenes() {
     })
     .sort((a, b) => (a.equipo || '').localeCompare(b.equipo || ''))
 
-  // Renderizado condicional para carga y error
   if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando ordenes...</p>
   if (error) return (
     <div style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>
@@ -57,10 +53,8 @@ function ListaOrdenes() {
 
   return (
     <div>
-      {/* Título sin tilde para evitar problemas de codificación */}
-      <h2 style={{ marginBottom: '1.5rem', color: '#1e293b' }}>Lista de Ordenes</h2>
+      <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-color)' }}>Lista de Ordenes</h2>
       
-      {/* Barra de búsqueda con texto simple en lugar de símbolo unicode */}
       <div className="search-bar">
         <span>Buscar:</span>
         <input 
@@ -71,7 +65,6 @@ function ListaOrdenes() {
         />
       </div>
 
-      {/* Lista de órdenes usando el grid de CSS */}
       {ordenesFiltradas.length === 0 ? (
         <p style={{ textAlign: 'center', color: '#64748b' }}>No se encontraron ordenes.</p>
       ) : (
@@ -82,10 +75,14 @@ function ListaOrdenes() {
                 <h3>{orden.equipo}</h3>
                 <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
                 <p><strong>Problema:</strong> {orden.problema}</p>
-                <p><strong>Estado:</strong> <span style={{ color: '#6366f1', fontWeight: 'bold' }}>{orden.estado}</span></p>
+                <p>
+                  <strong>Estado:</strong>{' '}
+                  <span className={`pill ${estadoColor(orden.estado)}`}>
+                    {estadoLabel(orden.estado)}
+                  </span>
+                </p>
               </div>
               <div style={{ marginTop: '1rem' }}>
-                {/* Enlace sin flecha, solo texto */}
                 <Link to={`/orden/${orden.id}`}>Ver detalle</Link>
               </div>
             </li>
