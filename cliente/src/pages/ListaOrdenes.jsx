@@ -42,9 +42,9 @@ function ListaOrdenes() {
     })
     .sort((a, b) => (a.equipo || '').localeCompare(b.equipo || ''))
 
-  if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando ordenes...</p>
+  if (cargando) return <p className="fade-in-page" style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando ordenes...</p>
   if (error) return (
-    <div style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>
+    <div className="fade-in-page" style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>
       <strong>Error al cargar las ordenes:</strong> {error}
       <br />
       <button onClick={cargarOrdenes} style={{ marginTop: '10px' }}>Reintentar</button>
@@ -52,7 +52,7 @@ function ListaOrdenes() {
   )
 
   return (
-    <div>
+    <div className="fade-in-page">
       <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-color)' }}>Lista de Ordenes</h2>
       
       <div className="search-bar">
@@ -70,7 +70,7 @@ function ListaOrdenes() {
       ) : (
         <ul className="ordenes-grid">
           {ordenesFiltradas.map(orden => (
-            <li key={orden.id} className="order-card">
+            <li key={`${orden.id}-${busqueda}`} className="order-card">
               <div>
                 <h3>{orden.equipo}</h3>
                 <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
@@ -82,9 +82,8 @@ function ListaOrdenes() {
                   </span>
                 </p>
               </div>
-              <div style={{ marginTop: '1rem' }}>
-                <Link to={`/orden/${orden.id}`}>Ver detalle</Link>
-              </div>
+              {/* Boton de ancho completo */}
+              <Link to={`/orden/${orden.id}`} className="card-link">Ver detalle</Link>
             </li>
           ))}
         </ul>

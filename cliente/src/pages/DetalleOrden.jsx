@@ -15,8 +15,6 @@ function DetalleOrden() {
   const [manoObra, setManoObra] = useState(0)
   const [piezas, setPiezas] = useState([])
   const [nuevaPieza, setNuevaPieza] = useState({ descripcion: '', cantidad: 1, precio: 0 })
-  
-  // Estado para errores del formulario personalizado
   const [formError, setFormError] = useState('')
 
   const cargarDatos = async () => {
@@ -71,18 +69,11 @@ function DetalleOrden() {
 
   const guardarPresupuesto = async (e) => {
     e.preventDefault()
-    setFormError('') // Limpiar errores previos
-
-    // Validacion manual
+    setFormError('')
     if (!diagnostico.trim()) {
       setFormError('El diagnostico es obligatorio.')
       return
     }
-    if (Number(manoObra) < 0) {
-      setFormError('La mano de obra no puede ser negativa.')
-      return
-    }
-
     try {
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}`, {
         method: 'PATCH',
@@ -115,12 +106,12 @@ function DetalleOrden() {
     setPiezas(piezas.filter((_, i) => i !== index))
   }
 
-  if (cargando) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando...</p>
+  if (cargando) return <p className="fade-in-page" style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando...</p>
   if (error) return <p style={{ color: 'red' }}>{error}</p>
   if (!orden) return <p>Orden no encontrada.</p>
 
   return (
-    <div>
+    <div className="fade-in-page">
       <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>Volver a la lista</Link>
       <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-color)' }}>Detalle de la Orden</h2>
 
@@ -179,25 +170,16 @@ function DetalleOrden() {
       {orden.estado === 'en_diagnostico' && (
         <div className="detail-container" style={{ borderTop: '4px solid #6366f1' }}>
           <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Registrar Presupuesto</h3>
-          {/* Mensaje de error personalizado */}
-          {formError && <div style={{ color: 'red', marginBottom: '1rem', background: '#fee2e2', padding: '0.5rem', borderRadius: '4px' }}>{formError}</div>}
+          {formError && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', background: '#fee2e2', padding: '0.5rem', borderRadius: '4px' }}>{formError}</div>}
           
-          <form onSubmit={guardarPresupuesto}>
+          <form onSubmit={guardarPresupuesto} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); guardarPresupuesto(e); } }}>
             <div style={{ marginBottom: '1rem' }}>
               <label>Diagnostico:</label>
-              <textarea 
-                value={diagnostico} 
-                onChange={e => setDiagnostico(e.target.value)} 
-                rows="3" 
-              />
+              <textarea value={diagnostico} onChange={e => setDiagnostico(e.target.value)} rows="3" />
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <label>Mano de obra ($):</label>
-              <input 
-                type="number" 
-                value={manoObra} 
-                onChange={e => setManoObra(e.target.value)} 
-              />
+              <input type="number" value={manoObra} onChange={e => setManoObra(e.target.value)} />
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <label>Piezas</label>
@@ -210,26 +192,9 @@ function DetalleOrden() {
                 ))}
               </ul>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <input 
-                  placeholder="Descripcion" 
-                  value={nuevaPieza.descripcion} 
-                  onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} 
-                  style={{ flex: 2 }} 
-                />
-                <input 
-                  type="number" 
-                  placeholder="Cant" 
-                  value={nuevaPieza.cantidad} 
-                  onChange={e => setNuevaPieza({...nuevaPieza, cantidad: Number(e.target.value)})} 
-                  style={{ flex: 1 }} 
-                />
-                <input 
-                  type="number" 
-                  placeholder="Precio" 
-                  value={nuevaPieza.precio} 
-                  onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} 
-                  style={{ flex: 1 }} 
-                />
+                <input placeholder="Descripcion" value={nuevaPieza.descripcion} onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} style={{ flex: 2 }} />
+                <input type="number" placeholder="Cant" value={nuevaPieza.cantidad} onChange={e => setNuevaPieza({...nuevaPieza, cantidad: Number(e.target.value)})} style={{ flex: 1 }} />
+                <input type="number" placeholder="Precio" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} style={{ flex: 1 }} />
                 <button type="button" onClick={agregarPieza} style={{ flex: 0 }}>Anadir</button>
               </div>
             </div>
@@ -262,12 +227,10 @@ function DetalleOrden() {
           <li style={{ color: '#64748b' }}>No hay eventos registrados.</li>
         ) : (
           eventos.map(ev => (
-            <li 
-              key={ev.id} 
-              style={{ background: 'var(--card-bg)', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', color: 'var(--text-color)' }}
-            >
-              <strong>{ev.de}</strong> - <strong>{ev.a}</strong> 
-              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+            <li key={ev.id} style={{ background: 'var(--card-bg)', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', color: 'var(--text-color)' }}>
+              <strong>{estadoLabel(ev.de)}</strong> - <strong>{estadoLabel(ev.a)}</strong> 
+              {/* Fecha separada con un espacio extra */}
+              <span style={{ color: '#64748b', fontSize: '0.9rem', marginLeft: '0.5rem' }}>
                 ({ev.created ? new Date(ev.created).toLocaleString() : 'Fecha no disponible'})
               </span>
             </li>

@@ -1,10 +1,12 @@
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 
 function Layout() {
   const [temaOscuro, setTemaOscuro] = useState(() => {
     return localStorage.getItem('tema') === 'oscuro'
   })
+  
+  const location = useLocation()
 
   useEffect(() => {
     if (temaOscuro) {
@@ -21,11 +23,12 @@ function Layout() {
       <header>
         <h1>Taller de Reparaciones</h1>
         <nav>
-          <Link to="/">Inicio</Link>
-          <Link to="/orden/nueva">Nueva Orden</Link>
-          <Link to="/acerca">Acerca de</Link>
+          <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Inicio</Link>
+          <Link to="/orden/nueva" className={location.pathname === '/orden/nueva' ? 'active' : ''}>Nueva Orden</Link>
+          <Link to="/acerca" className={location.pathname === '/acerca' ? 'active' : ''}>Acerca de</Link>
+          
           <button className="theme-toggle" onClick={() => setTemaOscuro(!temaOscuro)}>
-            {temaOscuro ? 'Modo Claro' : 'Modo Oscuro'}
+            <span className="theme-icon">{temaOscuro ? '\u2600' : '\u263D'}</span>
           </button>
         </nav>
       </header>
