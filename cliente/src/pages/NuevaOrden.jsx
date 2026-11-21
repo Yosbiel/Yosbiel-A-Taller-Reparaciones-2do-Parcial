@@ -22,16 +22,22 @@ function NuevaOrden() {
     e.preventDefault()
     setError(null)
 
-    // Validacion manual
+    // 1. Validar que se seleccione un cliente
     if (!form.cliente) return setError('Selecciona un cliente.')
-    if (!form.equipo.trim()) return setError('El equipo es obligatorio.')
-    if (!form.problema.trim()) return setError('El problema es obligatorio.')
+    
+    // 2. Validar que el equipo no tenga solo espacios y tenga minimo 2 caracteres
+    if (!form.equipo.trim() || form.equipo.trim().length < 2) 
+      return setError('El equipo debe tener al menos 2 caracteres.')
+    
+    // 3. Validar que el problema no sea solo espacios y tenga minimo 5 caracteres
+    if (!form.problema.trim() || form.problema.trim().length < 5) 
+      return setError('El problema debe tener al menos 5 caracteres.')
 
     try {
       const formData = new FormData()
       formData.append('cliente', form.cliente)
-      formData.append('equipo', form.equipo)
-      formData.append('problema', form.problema)
+      formData.append('equipo', form.equipo.trim())
+      formData.append('problema', form.problema.trim())
       formData.append('estado', 'solicitada')
       fotos.forEach(f => formData.append('fotos', f))
 

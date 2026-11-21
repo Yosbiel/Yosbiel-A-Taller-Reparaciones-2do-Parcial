@@ -70,16 +70,37 @@ function DetalleOrden() {
   const guardarPresupuesto = async (e) => {
     e.preventDefault()
     setFormError('')
-    if (!diagnostico.trim()) {
-      setFormError('El diagnostico es obligatorio.')
+
+    // 1. Validar diagnostico
+    if (!diagnostico.trim() || diagnostico.trim().length < 5) {
+      setFormError('El diagnostico debe tener al menos 5 caracteres.')
       return
     }
+
+    // 2. Validar mano de obra (no negativa)
+    if (Number(manoObra) < 0) {
+      setFormError('La mano de obra no puede ser negativa.')
+      return
+    }
+
+    // 3. Validar piezas (cantidad y precio positivos)
+    for (let p of piezas) {
+      if (Number(p.cantidad) <= 0) {
+        setFormError('La cantidad de cada pieza debe ser mayor a 0.')
+        return
+      }
+      if (Number(p.precio) < 0) {
+        setFormError('El precio de cada pieza no puede ser negativo.')
+        return
+      }
+    }
+
     try {
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          diagnostico: diagnostico,
+          diagnostico: diagnostico.trim(),
           manoObra: Number(manoObra),
           piezas: piezas,
           estado: 'presupuestada'
@@ -96,7 +117,7 @@ function DetalleOrden() {
   }
 
   const agregarPieza = () => {
-    if (nuevaPieza.descripcion && nuevaPieza.cantidad > 0) {
+    if (nuevaPieza.descripcion.trim() && nuevaPieza.cantidad > 0 && nuevaPieza.precio >= 0) {
       setPiezas([...piezas, nuevaPieza])
       setNuevaPieza({ descripcion: '', cantidad: 1, precio: 0 })
     }
@@ -172,14 +193,19 @@ function DetalleOrden() {
           <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Registrar Presupuesto</h3>
           {formError && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', background: '#fee2e2', padding: '0.5rem', borderRadius: '4px' }}>{formError}</div>}
           
-          <form onSubmit={guardarPresupuesto} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); guardarPresupuesto(e); } }}>
+          <form onSubmit={guardarPresupuesto} onKeyDown={(e) => {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+              e.preventDefault()
+              guardarPresupuesto(e)
+            }
+          }}>
             <div style={{ marginBottom: '1rem' }}>
               <label>Diagnostico:</label>
               <textarea value={diagnostico} onChange={e => setDiagnostico(e.target.value)} rows="3" />
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <label>Mano de obra ($):</label>
-              <input type="number" value={manoObra} onChange={e => setManoObra(e.target.value)} />
+              <input type="number" min="0" value={manoObra} onChange={e => setManoObra(e.target.value)} />
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <label>Piezas</label>
@@ -193,8 +219,8 @@ function DetalleOrden() {
               </ul>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <input placeholder="Descripcion" value={nuevaPieza.descripcion} onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} style={{ flex: 2 }} />
-                <input type="number" placeholder="Cant" value={nuevaPieza.cantidad} onChange={e => setNuevaPieza({...nuevaPieza, cantidad: Number(e.target.value)})} style={{ flex: 1 }} />
-                <input type="number" placeholder="Precio" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} style={{ flex: 1 }} />
+                <input type="number" min="1" placeholder="Cant" value={nuevaPieza.cantidad} onChange={e => setNuevaPieza({...nuevaPieza, cantidad: Number(e.target.value)})} style={{ flex: 1 }} />
+                <input type="number" min="0" placeholder="Precio" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: Number(e.target.value)})} style={{ flex: 1 }} />
                 <button type="button" onClick={agregarPieza} style={{ flex: 0 }}>Anadir</button>
               </div>
             </div>
@@ -229,7 +255,6 @@ function DetalleOrden() {
           eventos.map(ev => (
             <li key={ev.id} style={{ background: 'var(--card-bg)', padding: '0.8rem', borderLeft: '4px solid #6366f1', marginBottom: '0.5rem', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', color: 'var(--text-color)' }}>
               <strong>{estadoLabel(ev.de)}</strong> - <strong>{estadoLabel(ev.a)}</strong> 
-              {/* Fecha separada con un espacio extra */}
               <span style={{ color: '#64748b', fontSize: '0.9rem', marginLeft: '0.5rem' }}>
                 ({ev.created ? new Date(ev.created).toLocaleString() : 'Fecha no disponible'})
               </span>
