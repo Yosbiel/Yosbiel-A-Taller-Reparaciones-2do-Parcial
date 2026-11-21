@@ -1,4 +1,4 @@
-// Mapeo de estados a etiquetas legibles (sin guiones bajos)
+// Mapeo de estados a etiquetas legibles para mostrar en la interfaz
 export const estadoLabel = (estado) => {
   const mapa = {
     'solicitada': 'Solicitada',
@@ -11,9 +11,11 @@ export const estadoLabel = (estado) => {
     'entregada': 'Entregada',
     'cancelada': 'Cancelada'
   }
+  // Devuelve la etiqueta o el mismo estado si no se encuentra en el mapa
   return mapa[estado] || estado
 }
 
+// Mapeo de estados a clases CSS para las pildoras de colores
 export const estadoColor = (estado) => {
   const colores = {
     'solicitada': 'pill-gray',
@@ -26,5 +28,6 @@ export const estadoColor = (estado) => {
     'entregada': 'pill-dark',
     'cancelada': 'pill-red'
   }
+  // Devuelve la clase de color o la gris por defecto
   return colores[estado] || 'pill-gray'
 }

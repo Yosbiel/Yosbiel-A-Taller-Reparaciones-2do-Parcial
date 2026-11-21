@@ -6,31 +6,38 @@ const PB_URL = 'http://127.0.0.1:8090'
 
 function DetalleOrden() {
   const { id } = useParams()
+  
+  // Estados principales
   const [orden, setOrden] = useState(null)
   const [eventos, setEventos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
+  // Estados para el formulario de presupuesto
   const [diagnostico, setDiagnostico] = useState('')
   const [manoObra, setManoObra] = useState(0)
   const [piezas, setPiezas] = useState([])
   const [nuevaPieza, setNuevaPieza] = useState({ descripcion: '', cantidad: 1, precio: 0 })
   const [formError, setFormError] = useState('')
 
+  // Funcion para cargar la orden y sus eventos
   const cargarDatos = async () => {
     setCargando(true)
     try {
+      // 1- Cargamos la orden con el cliente expandido
       const resOrden = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}?expand=cliente`)
       if (!resOrden.ok) throw new Error('Orden no encontrada')
       const dataOrden = await resOrden.json()
       setOrden(dataOrden)
 
+      // 2- Si esta en diagnostico, precargamos el formulario
       if (dataOrden.estado === 'en_diagnostico') {
         setDiagnostico(dataOrden.diagnostico || '')
         setManoObra(dataOrden.manoObra || 0)
         setPiezas(dataOrden.piezas || [])
       }
 
+      // 3- Cargamos los eventos del historial
       const resEventos = await fetch(`${PB_URL}/api/collections/eventos/records?filter=(orden='${id}')`)
       const dataEventos = await resEventos.json()
       setEventos(dataEventos.items || [])
@@ -41,15 +48,18 @@ function DetalleOrden() {
     }
   }
 
+  // useEffect para cargar los datos cuando el ID cambie o al montar
   useEffect(() => {
     cargarDatos()
   }, [id])
 
+  // Calculo del total del presupuesto con useMemo
   const totalPresupuesto = useMemo(() => {
     const totalPiezas = (piezas || []).reduce((acc, p) => acc + (p.cantidad * p.precio), 0)
     return Number(manoObra) + totalPiezas
   }, [manoObra, piezas])
 
+  // Funcion para cambiar el estado de la orden
   const cambiarEstado = async (nuevoEstado) => {
     try {
       const res = await fetch(`${PB_URL}/api/collections/ordenes/records/${id}`, {
@@ -61,29 +71,30 @@ function DetalleOrden() {
         const err = await res.json()
         throw new Error(err.message || 'Error al cambiar de estado')
       }
+      // Recargamos despues de un retraso para que el hook cree el evento
       setTimeout(() => cargarDatos(), 500)
     } catch (e) {
       alert(e.message)
     }
   }
 
+  // Funcion para guardar el presupuesto y pasar a estado "presupuestada"
   const guardarPresupuesto = async (e) => {
     e.preventDefault()
     setFormError('')
 
-    // 1. Validar diagnostico
+    // Validaciones manuales
+    // 1- Diagnostico con al menos 5 caracteres
     if (!diagnostico.trim() || diagnostico.trim().length < 5) {
       setFormError('El diagnostico debe tener al menos 5 caracteres.')
       return
     }
-
-    // 2. Validar mano de obra (no negativa)
+    // 2- Mano de obra no negativa
     if (Number(manoObra) < 0) {
       setFormError('La mano de obra no puede ser negativa.')
       return
     }
-
-    // 3. Validar piezas (cantidad y precio positivos)
+    // 3- Piezas con cantidad y precio validos
     for (let p of piezas) {
       if (Number(p.cantidad) <= 0) {
         setFormError('La cantidad de cada pieza debe ser mayor a 0.')
@@ -116,6 +127,7 @@ function DetalleOrden() {
     }
   }
 
+  // Anadir una pieza al presupuesto
   const agregarPieza = () => {
     if (nuevaPieza.descripcion.trim() && nuevaPieza.cantidad > 0 && nuevaPieza.precio >= 0) {
       setPiezas([...piezas, nuevaPieza])
@@ -123,10 +135,12 @@ function DetalleOrden() {
     }
   }
 
+  // Quitar una pieza del presupuesto
   const quitarPieza = (index) => {
     setPiezas(piezas.filter((_, i) => i !== index))
   }
 
+  // Renderizado condicional
   if (cargando) return <p className="fade-in-page" style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando...</p>
   if (error) return <p style={{ color: 'red' }}>{error}</p>
   if (!orden) return <p>Orden no encontrada.</p>
@@ -136,6 +150,7 @@ function DetalleOrden() {
       <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>Volver a la lista</Link>
       <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-color)' }}>Detalle de la Orden</h2>
 
+      {/* Contenedor con los datos de la orden */}
       <div className="detail-container">
         <p><strong>Equipo:</strong> {orden.equipo}</p>
         <p><strong>Problema:</strong> {orden.problema}</p>
@@ -147,23 +162,20 @@ function DetalleOrden() {
         </p>
         <p><strong>Cliente:</strong> {orden.expand?.cliente?.nombre || 'N/A'}</p>
         
+        {/* Mostrar fotos si existen */}
         {orden.fotos && orden.fotos.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
             <strong>Fotos:</strong>
             <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem', flexWrap: 'wrap' }}>
               {orden.fotos.map((foto, i) => (
-                <img 
-                  key={i} 
-                  src={`${PB_URL}/api/files/ordenes/${orden.id}/${foto}`} 
-                  alt="foto" 
-                  style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} 
-                />
+                <img key={i} src={`${PB_URL}/api/files/ordenes/${orden.id}/${foto}`} alt="foto" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
               ))}
             </div>
           </div>
         )}
       </div>
 
+      {/* Botones de accion segun el estado actual */}
       <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {orden.estado === 'solicitada' && (
           <>
@@ -188,11 +200,15 @@ function DetalleOrden() {
         )}
       </div>
 
+      {/* Formulario de presupuesto (solo si esta en diagnostico) */}
       {orden.estado === 'en_diagnostico' && (
         <div className="detail-container" style={{ borderTop: '4px solid #6366f1' }}>
           <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Registrar Presupuesto</h3>
+          
+          {/* Mensaje de error con animacion */}
           {formError && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', background: '#fee2e2', padding: '0.5rem', borderRadius: '4px' }}>{formError}</div>}
           
+          {/* Formulario con soporte para Enter */}
           <form onSubmit={guardarPresupuesto} onKeyDown={(e) => {
             if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
               e.preventDefault()
@@ -233,6 +249,7 @@ function DetalleOrden() {
         </div>
       )}
 
+      {/* Mostrar presupuesto registrado (si ya no esta en diagnostico) */}
       {(orden.diagnostico || orden.manoObra || (orden.piezas && orden.piezas.length > 0)) && orden.estado !== 'en_diagnostico' && (
          <div className="detail-container budget-box">
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Presupuesto Registrado</h3>
@@ -247,6 +264,7 @@ function DetalleOrden() {
          </div>
       )}
 
+      {/* Historial de eventos */}
       <h3 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Historial de Eventos</h3>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {eventos.length === 0 ? (
