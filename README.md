@@ -47,8 +47,13 @@ npm run dev</code></pre>
   <li>Luego haz lo mismo con <code>cliente/start.ps1</code>. Este generará el enlace de Vite en la terminal; cópialo y pégalo en tu navegador.</li>
 </ul>
 
-<h2>Datos de prueba</h2>
-<p>El proyecto incluye datos de prueba pre-cargados (2 clientes y 3 órdenes en distintas etapas). Si necesitas recrearlos, puedes usar el panel de administración de PocketBase (<code>http://127.0.0.1:8090/_/</code>) o insertarlos mediante la API.</p>
+<h2>Datos de prueba y migraciones</h2>
+<p>El proyecto incluye dos archivos de migración en <code>servidor/pb_migrations/</code>:</p>
+<ul>
+  <li><code>1700000000_init_taller.js</code>: Crea las colecciones <code>clientes</code>, <code>ordenes</code> y <code>eventos</code> con sus campos y reglas de seguridad.</li>
+  <li><code>1700000001_seed_datos.js</code>: Inserta los datos de prueba (2 clientes y 3 órdenes en distintas etapas).</li>
+</ul>
+<p>Al arrancar PocketBase por primera vez, estas migraciones se ejecutan automáticamente y dejan el proyecto listo para usar, sin necesidad de crear datos a mano.</p>
 
 <h2>Funcionalidades implementadas</h2>
 <ul>
@@ -60,6 +65,7 @@ npm run dev</code></pre>
   <li>Modo oscuro/claro con persistencia en <code>localStorage</code>.</li>
   <li>Píldoras de estado con colores según la etapa.</li>
   <li>Búsqueda y orden alfabético en la lista de órdenes.</li>
+  <li>Validaciones personalizadas en los formularios (sin mensajes nativos del navegador).</li>
 </ul>
 
 <h2>Estructura del proyecto</h2>
